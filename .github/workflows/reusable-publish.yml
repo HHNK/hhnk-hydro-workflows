@@ -1,0 +1,74 @@
+name: Reusable Publish Workflow
+
+on:
+  workflow_call:
+    inputs:
+      run-tests:
+        description: 'Run tests before publishing'
+        required: false
+        type: boolean
+        default: true
+      test-command:
+        description: 'Test command to run'
+        required: false
+        type: string
+        default: 'pixi run test'
+      build-command:
+        description: 'Build command to run'
+        required: false
+        type: string
+        default: 'pixi run build'
+      upload-to-pypi:
+        description: 'Upload to PyPI'
+        required: false
+        type: boolean
+        default: false
+      upload-to-github:
+        description: 'Upload to GitHub Releases'
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      PYPI_API_TOKEN:
+        required: false
+      GITHUB_TOKEN:
+        required: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.12
+        with:
+          pixi-version: "latest"
+          cache: true
+          locked: false
+
+      - name: Run tests
+        if: inputs.run-tests
+        run: ${{ inputs.test-command }}
+
+      - name: Build package
+        run: ${{ inputs.build-command }}
+
+      - name: Upload to GitHub Releases
+        if: inputs.upload-to-github
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to PyPI
+        if: inputs.upload-to-pypi && secrets.PYPI_API_TOKEN != ''
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          pip install twine
+          twine upload dist/*

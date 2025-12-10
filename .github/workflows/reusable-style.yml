@@ -1,0 +1,40 @@
+name: Reusable Style Check Workflow
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: 'Python version to use'
+        required: false
+        type: string
+        default: '3.11'
+      pixi-version:
+        description: 'Pixi version to use'
+        required: false
+        type: string
+        default: 'v0.39.4'
+      style-command:
+        description: 'Style check command to run'
+        required: false
+        type: string
+        default: 'pixi run style-check'
+
+jobs:
+  style:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: ${{ inputs.pixi-version }}
+
+      - name: Run style checks
+        run: ${{ inputs.style-command }}

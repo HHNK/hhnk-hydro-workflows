@@ -1,0 +1,66 @@
+name: Reusable Test Workflow
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        description: 'Operating systems to test on (JSON array)'
+        required: false
+        type: string
+        default: '["ubuntu-latest"]'
+      run-style-check:
+        description: 'Run style checks before tests'
+        required: false
+        type: boolean
+        default: true
+      style-command:
+        description: 'Style check command'
+        required: false
+        type: string
+        default: 'pixi run style-check'
+      test-command:
+        description: 'Test command to run'
+        required: false
+        type: string
+        default: 'pixi run test'
+      upload-coverage:
+        description: 'Upload coverage to Codecov'
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      CODECOV_TOKEN:
+        required: false
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: ${{ fromJson(inputs.os) }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.12
+        with:
+          pixi-version: "latest"
+          cache: true
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+          locked: false
+
+      - name: Run style checks
+        if: inputs.run-style-check
+        run: ${{ inputs.style-command }}
+
+      - name: Run tests
+        run: ${{ inputs.test-command }}
+
+      - name: Upload coverage to Codecov
+        if: inputs.upload-coverage && matrix.os == 'ubuntu-latest'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          fail_ci_if_error: false
