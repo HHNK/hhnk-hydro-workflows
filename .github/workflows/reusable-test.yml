@@ -28,6 +28,11 @@ on:
         required: false
         type: boolean
         default: true
+      use-ssh:
+        description: 'Use SSH for private repo access (requires CICD secret)'
+        required: false
+        type: boolean
+        default: false
     secrets:
       CODECOV_TOKEN:
         required: false
@@ -46,11 +51,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup SSH for private repos
+        if: inputs.use-ssh
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.CICD }}
 
-      - name: Configure git for private repos
+      - name: Configure git for private repos (SSH)
+        if: inputs.use-ssh
         run: git config --global url."git@github.com:".insteadOf "https://github.com/"
 
       - name: Setup pixi
