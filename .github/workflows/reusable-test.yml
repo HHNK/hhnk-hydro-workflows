@@ -8,13 +8,18 @@ on:
         required: false
         type: string
         default: '["ubuntu-latest"]'
+      run-pre-commit:
+        description: 'Run pre-commit hooks before tests'
+        required: false
+        type: boolean
+        default: true
       run-style-check:
-        description: 'Run style checks before tests'
+        description: 'Run style checks before tests (ignored if run-pre-commit is true)'
         required: false
         type: boolean
         default: true
       style-command:
-        description: 'Style check command'
+        description: 'Style check command (ignored if run-pre-commit is true)'
         required: false
         type: string
         default: 'pixi run style-check'
@@ -68,8 +73,12 @@ jobs:
           cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
           locked: false
 
-      - name: Run style checks
-        if: inputs.run-style-check
+      - name: Run pre-commit hooks
+        if: inputs.run-pre-commit
+        uses: pre-commit/action@v3.0.1
+
+      - name: Run style checks (fallback)
+        if: ${{ !inputs.run-pre-commit && inputs.run-style-check }}
         run: ${{ inputs.style-command }}
 
       - name: Run tests
