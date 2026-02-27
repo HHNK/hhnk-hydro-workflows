@@ -31,8 +31,6 @@ on:
     secrets:
       PYPI_API_TOKEN:
         required: false
-      GITHUB_TOKEN:
-        required: false
       GH_PAT:
         description: 'GitHub PAT for private repo access (HTTPS)'
         required: false
@@ -71,7 +69,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ github.token }}
 
       - name: Upload to PyPI
         if: inputs.upload-to-pypi
