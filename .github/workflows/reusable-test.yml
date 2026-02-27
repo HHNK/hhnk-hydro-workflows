@@ -33,16 +33,19 @@ on:
         required: false
         type: boolean
         default: true
-      use-ssh:
-        description: 'Use SSH for private repo access (requires CICD secret)'
+      sibling-repos:
+        description: >
+          JSON array of sibling repos to checkout (e.g. '["hhnk-hydro-core", "hhnk-hydro-business"]').
+          Uses branch fallback: tries current branch first, falls back to main.
+          Requires GH_PAT secret. When set, the calling repo is checked out into a subdirectory.
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: '[]'
     secrets:
       CODECOV_TOKEN:
         required: false
-      CICD:
-        description: 'SSH deploy key for private repo access'
+      GH_PAT:
+        description: 'GitHub PAT for private repo access (HTTPS)'
         required: false
 
 jobs:
@@ -53,18 +56,51 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      # --- Checkout: standard (no siblings) ---
+      - name: Checkout repo
+        if: inputs.sibling-repos == '[]'
+        uses: actions/checkout@v4
 
-      - name: Setup SSH for private repos
-        if: inputs.use-ssh
-        uses: webfactory/ssh-agent@v0.9.0
+      # --- Checkout: with siblings ---
+      - name: Checkout repo (into subdirectory)
+        if: inputs.sibling-repos != '[]'
+        uses: actions/checkout@v4
         with:
-          ssh-private-key: ${{ secrets.CICD }}
+          path: ${{ github.event.repository.name }}
 
-      - name: Configure git for private repos (SSH)
-        if: inputs.use-ssh
-        run: git config --global url."git@github.com:".insteadOf "https://github.com/"
+      - name: Checkout sibling repos
+        if: inputs.sibling-repos != '[]'
+        shell: bash
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          SIBLING_REPOS: ${{ inputs.sibling-repos }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          for repo in $(echo "$SIBLING_REPOS" | jq -r '.[]'); do
+            echo "::group::Checkout $repo"
+            echo "Trying branch: $BRANCH"
+            if git clone --branch "$BRANCH" --single-branch --depth 1 \
+                "https://x-access-token:${GH_PAT}@github.com/HHNK/${repo}.git" \
+                "$repo" 2>/dev/null; then
+              echo "Checked out branch: $BRANCH"
+            else
+              echo "Branch $BRANCH not found, falling back to main"
+              git clone --branch main --single-branch --depth 1 \
+                "https://x-access-token:${GH_PAT}@github.com/HHNK/${repo}.git" \
+                "$repo"
+            fi
+            echo "::endgroup::"
+          done
 
+      # --- Git auth for pixi (HTTPS PAT) ---
+      - name: Configure git credentials for private repos
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        if: env.GH_PAT != ''
+        shell: bash
+        run: git config --global url."https://x-access-token:${GH_PAT}@github.com/".insteadOf "https://github.com/"
+
+      # --- Pixi setup ---
       - name: Setup pixi
         uses: prefix-dev/setup-pixi@v0.8.12
         with:
@@ -72,22 +108,37 @@ jobs:
           cache: true
           cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
           locked: false
+          manifest-path: ${{ inputs.sibling-repos != '[]' && format('{0}/pixi.toml', github.event.repository.name) || 'pixi.toml' }}
 
+      # --- Pre-commit (standard layout) ---
       - name: Run pre-commit hooks
-        if: inputs.run-pre-commit
+        if: inputs.run-pre-commit && inputs.sibling-repos == '[]'
         uses: pre-commit/action@v3.0.1
 
+      # --- Pre-commit (sibling layout) ---
+      - name: Run pre-commit hooks (sibling layout)
+        if: inputs.run-pre-commit && inputs.sibling-repos != '[]'
+        working-directory: ${{ github.event.repository.name }}
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files
+
+      # --- Style check fallback ---
       - name: Run style checks (fallback)
         if: ${{ !inputs.run-pre-commit && inputs.run-style-check }}
         run: ${{ inputs.style-command }}
+        working-directory: ${{ inputs.sibling-repos != '[]' && github.event.repository.name || '.' }}
 
+      # --- Tests ---
       - name: Run tests
         run: ${{ inputs.test-command }}
+        working-directory: ${{ inputs.sibling-repos != '[]' && github.event.repository.name || '.' }}
 
+      # --- Coverage ---
       - name: Upload coverage to Codecov
         if: inputs.upload-coverage && matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
+          files: ${{ inputs.sibling-repos != '[]' && format('{0}/coverage.xml', github.event.repository.name) || 'coverage.xml' }}
           fail_ci_if_error: false
