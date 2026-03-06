@@ -135,10 +135,10 @@ jobs:
         working-directory: ${{ inputs.sibling-repos != '[]' && github.event.repository.name || '.' }}
 
       # --- Coverage ---
-      - name: Upload coverage to Codecov
-        if: inputs.upload-coverage && matrix.os == 'ubuntu-latest'
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ${{ inputs.sibling-repos != '[]' && format('{0}/coverage.xml', github.event.repository.name) || 'coverage.xml' }}
-          fail_ci_if_error: false
+      # - name: Upload coverage to Codecov
+      #   if: inputs.upload-coverage && matrix.os == 'ubuntu-latest'
+      #   uses: codecov/codecov-action@v5
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     files: ${{ inputs.sibling-repos != '[]' && format('{0}/coverage.xml', github.event.repository.name) || 'coverage.xml' }}
+      #     fail_ci_if_error: false
