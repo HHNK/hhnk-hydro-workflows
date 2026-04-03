@@ -147,4 +147,4 @@ jobs:
       #   with:
       #     token: ${{ secrets.CODECOV_TOKEN }}
       #     files: ${{ inputs.sibling-repos != '[]' && format('{0}/coverage.xml', github.event.repository.name) || 'coverage.xml' }}
-      #     fail_ci_if_error: false TYPO
+      #     fail_ci_if_error: false
