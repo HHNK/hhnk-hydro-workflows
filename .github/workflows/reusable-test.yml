@@ -22,12 +22,12 @@ on:
         description: 'Style check command (ignored if run-pre-commit is true)'
         required: false
         type: string
-        default: 'pixi run style-check'
+        default: ''
       test-command:
         description: 'Test command to run'
         required: false
         type: string
-        default: 'pixi run test'
+        default: ''
       upload-coverage:
         description: 'Upload coverage to Codecov'
         required: false
@@ -41,6 +41,11 @@ on:
         required: false
         type: string
         default: '[]'
+      pixi-environment:
+        description: 'Pixi environment to use (e.g. "prd", "default")'
+        required: false
+        type: string
+        default: 'default'
     secrets:
       CODECOV_TOKEN:
         required: false
@@ -109,6 +114,7 @@ jobs:
           cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
           locked: false
           manifest-path: ${{ inputs.sibling-repos != '[]' && format('{0}/pixi.toml', github.event.repository.name) || 'pixi.toml' }}
+          environments: ${{ inputs.pixi-environment }}
 
       # --- Pre-commit (standard layout) ---
       - name: Run pre-commit hooks
@@ -126,12 +132,12 @@ jobs:
       # --- Style check fallback ---
       - name: Run style checks (fallback)
         if: ${{ !inputs.run-pre-commit && inputs.run-style-check }}
-        run: ${{ inputs.style-command }}
+        run: ${{ inputs.style-command != '' && inputs.style-command || format('pixi run -e {0} style-check', inputs.pixi-environment) }}
         working-directory: ${{ inputs.sibling-repos != '[]' && github.event.repository.name || '.' }}
 
       # --- Tests ---
       - name: Run tests
-        run: ${{ inputs.test-command }}
+        run: ${{ inputs.test-command != '' && inputs.test-command || format('pixi run -e {0} test', inputs.pixi-environment) }}
         working-directory: ${{ inputs.sibling-repos != '[]' && github.event.repository.name || '.' }}
 
       # --- Coverage ---
@@ -141,4 +147,4 @@ jobs:
       #   with:
       #     token: ${{ secrets.CODECOV_TOKEN }}
       #     files: ${{ inputs.sibling-repos != '[]' && format('{0}/coverage.xml', github.event.repository.name) || 'coverage.xml' }}
-      #     fail_ci_if_error: false
+      #     fail_ci_if_error: false TYPO
