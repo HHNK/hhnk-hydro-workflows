@@ -1,17 +1,35 @@
-# TODO create shared repository to use this script as pre-commit.
+"""Export Pixi dependencies to requirements files.
+
+This script extracts package information from the current Pixi
+environment and writes:
+
+- security/requirements.txt
+- security/conda_requirements.txt
+
+The generated files can be used by Dependabot and other tooling that
+does not natively support Pixi.
+"""
+
 import json
 import subprocess
 from pathlib import Path
 
-def main():
-    # get folder location based on the location of this file
+
+def main() -> None:
+    """Generate requirements files from the current Pixi environment."""
+
     root = Path.cwd() / "security"
 
     # Call pixi to get the JSON output
-    result = subprocess.run(["pixi", "list", "--json"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["pixi", "list", "--json"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
     packages = json.loads(result.stdout)
 
-    # Prepare lists
+    # Prepare lists for PyPI and Conda packages and fill with the package name and version.
     pypi_packages = []
     conda_packages = []
 
