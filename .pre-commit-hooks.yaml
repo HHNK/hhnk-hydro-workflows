@@ -1,6 +1,6 @@
 - id: generate-requirements
   name: Generate requirements.txt from pixi
   entry: python hooks/generate_requirements.py
-  language: python
+  language: system
   pass_filenames: false
   stages: [pre-push, manual]
