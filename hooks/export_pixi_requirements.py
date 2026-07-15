@@ -27,6 +27,7 @@ def main():
             conda_packages.append(line)
 
     # Write PyPI packages
+    root.mkdir(exist_ok=True)
     with open(root / "requirements.txt", "w") as f:
         f.write("\n".join(pypi_packages))
 
