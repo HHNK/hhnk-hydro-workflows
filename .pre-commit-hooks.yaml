@@ -4,3 +4,4 @@
   language: python
   pass_filenames: false
   stages: [pre-push, manual]
+  files: ^pixi\.lock$
