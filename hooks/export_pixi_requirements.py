@@ -34,8 +34,8 @@ def main():
     with open(root / "conda_requirements.txt", "w") as f:
         f.write("\n".join(conda_packages))
 
-    print(f"requirements.txt generated with {len(pypi_packages)} PyPI packages.")
-    print(f"conda_requirements.txt generated with {len(conda_packages)} Conda packages.")
+    print(f"{root / 'requirements.txt'} generated with {len(pypi_packages)} PyPI packages.")
+    print(f"{root / 'conda_requirements.txt'} generated with {len(conda_packages)} Conda packages.")
 
 
 if __name__ == "__main__":

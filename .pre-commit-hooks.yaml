@@ -1,6 +1,6 @@
-- id: generate-requirements
-  name: Generate requirements.txt from pixi
-  entry: generate-requirements
+- id: export-pixi-requirements
+  name: Export Pixi requirements
+  entry: export-pixi-requirements
   language: python
   pass_filenames: false
   stages: [pre-commit, manual]
