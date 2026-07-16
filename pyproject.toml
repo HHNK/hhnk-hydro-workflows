@@ -1,0 +1,6 @@
+[project]
+name = "hhnk-hydro-workflows"
+version = "0.1.0"
+
+[project.scripts]
+export-pixi-requirements = "hooks.export_pixi_requirements:main"

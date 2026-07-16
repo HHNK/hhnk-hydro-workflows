@@ -123,3 +123,61 @@ jobs:
 - `hhnk-hydro-gui`
 - `hhnk-hydro-qgis`
 - `hhnk-hydro-notebooks`
+
+
+
+# HHNK Hydro Pre-Commit Hooks
+
+Install the hooks locally:
+
+- `pre-commit clean` # clears the pre-commit cache
+- `pre-commit install --install-hooks --hook-type pre-commit --hook-type pre-push`
+
+## Hook: export-pixi-requirements
+This hook enables Dependabot security scanning for repositories that use Pixi.
+
+Dependabot does not currently detect dependencies from a `pixi.toml` file. Therefore, the dependencies defined in the Pixi environment are exported to requirements files that Dependabot can automatically detect and scan.
+
+The hook generates the following files:
+
+- `security/conda_requirements.txt`
+- `security/requirements.txt`
+
+The files are generated based on the contents of `pixi.lock`.
+
+The hook only runs when `pixi.lock` changes.
+
+For the initial setup, run `pre-commit run export-pixi-requirements --all-files`
+
+
+### Installation
+Add the following to .pre-commit-config.yaml:
+```yaml
+  - repo: https://github.com/HHNK/hhnk-hydro-workflows
+    rev: v0.1.0
+    hooks:
+     - id: export-pixi-requirements
+```
+
+Optionally, add a Pixi task:
+```toml
+export-pixi-requirements = "pre-commit run export-pixi-requirements --all-files"
+```
+
+## Hook development
+To develop hooks locally, update the consuming repository (for example hhnk-hydro-core) to reference your local clone of hhnk-hydro-workflows instead of the GitHub repository.
+
+```yaml
+  - repo: <PATHTO>\hhnk-hydro-workflows
+    rev: HEAD
+    hooks:
+      - id: export-pixi-requirements
+```
+
+After making changes to hhnk-hydro-workflows, follow these steps (do not skip any):
+1. Commit the changes in `hhnk-hydro-workflows`.
+2. In the target repository, clear the pre-commit cache: `pre-commit clean`
+3. Reinstall the hooks: `pre-commit install --install-hooks --hook-type pre-commit --hook-type pre-push`
+4. Run the hook: `pre-commit run export-pixi-requirements --all-files`
+
+

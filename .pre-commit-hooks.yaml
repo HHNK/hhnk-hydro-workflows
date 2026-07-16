@@ -1,0 +1,7 @@
+- id: export-pixi-requirements
+  name: Export Pixi requirements
+  entry: export-pixi-requirements
+  language: python
+  pass_filenames: false
+  stages: [pre-commit, manual]
+  files: ^pixi\.lock$
