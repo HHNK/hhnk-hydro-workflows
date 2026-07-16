@@ -1,7 +1,7 @@
 """Export Pixi dependencies to requirements files.
 
-This script extracts package information from the current Pixi
-environment and writes:
+This script extracts package information for a configured Pixi platform
+and writes:
 
 - security/requirements.txt
 - security/conda_requirements.txt
@@ -10,23 +10,39 @@ The generated files can be used by Dependabot and other tooling that
 does not natively support Pixi.
 """
 
+import argparse
 import json
 import subprocess
 from pathlib import Path
 
 
 def main() -> None:
-    """Generate requirements files from the current Pixi environment."""
+    """Generate requirements files for a configured Pixi platform."""
 
     root = Path.cwd() / "security"
 
-    # Call pixi to get the JSON output
-    result = subprocess.run(
-        ["pixi", "list", "--json"],
-        capture_output=True,
-        text=True,
-        check=True,
+    # Use a single platform to ensure deterministic output across
+    # developer machines and CI environments.
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--platform",
+        default="linux-64",
+        help="Pixi platform to export requirements for (default: linux-64).",
     )
+    args = parser.parse_args()
+
+    # Call pixi to get the JSON output
+    try:
+        result = subprocess.run(
+            ["pixi", "list", "--platform", args.platform, "--json"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print(f"Error calling pixi: {e.stderr}")
+        raise e
+
     packages = json.loads(result.stdout)
 
     # Prepare lists for PyPI and Conda packages and fill with the package name and version.

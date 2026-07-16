@@ -5,3 +5,5 @@
   pass_filenames: false
   stages: [pre-commit, manual]
   files: ^pixi\.lock$
+  args: ["--platform", "linux-64"]
+  

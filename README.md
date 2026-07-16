@@ -145,6 +145,14 @@ The hook generates the following files:
 
 The files are generated based on the contents of `pixi.lock`.
 
+To ensure deterministic output across development environments and CI systems, package exports default to the `linux-64` platform. Projects that do not support `linux-64` can override the platform:
+
+```yaml
+- id: export-pixi-requirements
+  args: ["--platform", "win-64"]
+```
+
+
 The hook only runs when `pixi.lock` changes.
 
 For the initial setup, run `pre-commit run export-pixi-requirements --all-files`
