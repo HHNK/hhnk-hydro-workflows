@@ -1,7 +1,7 @@
 """Export Pixi dependencies to requirements files.
 
-This script extracts package information from the current Pixi
-environment and writes:
+This script extracts package information for a configured Pixi platform
+and writes:
 
 - security/requirements.txt
 - security/conda_requirements.txt
@@ -17,14 +17,18 @@ from pathlib import Path
 
 
 def main() -> None:
-    """Generate requirements files from the current Pixi environment."""
+    """Generate requirements files for a configured Pixi platform."""
 
     root = Path.cwd() / "security"
 
-    # To ensure environment compatibility across different platforms, only one platform can be specified.
-    # The default platform is set to "linux-64" to maintain consistency in the generated requirements files.
+    # Use a single platform to ensure deterministic output across
+    # developer machines and CI environments.
     parser = argparse.ArgumentParser()
-    parser.add_argument("--platform", default="linux-64")
+    parser.add_argument(
+        "--platform",
+        default="linux-64",
+        help="Pixi platform to export requirements for (default: linux-64).",
+    )
     args = parser.parse_args()
 
     # Call pixi to get the JSON output
@@ -38,6 +42,7 @@ def main() -> None:
     except subprocess.CalledProcessError as e:
         print(f"Error calling pixi: {e.stderr}")
         raise e
+
     packages = json.loads(result.stdout)
 
     # Prepare lists for PyPI and Conda packages and fill with the package name and version.
