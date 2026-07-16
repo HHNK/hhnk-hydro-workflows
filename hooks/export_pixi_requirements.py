@@ -49,8 +49,9 @@ def main() -> None:
     pypi_file = root / "requirements.txt"
     conda_file = root / "conda_requirements.txt"
 
-    pypi_file.write_text("\n".join(pypi_packages))
-    conda_file.write_text("\n".join(conda_packages))
+    # Write packages with an empty line at end of file for end-of-file-fixer hook.
+    pypi_file.write_text("\n".join(pypi_packages) + "\n")
+    conda_file.write_text("\n".join(conda_packages) + "\n")
 
     print(f"{pypi_file} generated with {len(pypi_packages)} PyPI packages.")
     print(f"{conda_file} generated with {len(conda_packages)} Conda packages.")
