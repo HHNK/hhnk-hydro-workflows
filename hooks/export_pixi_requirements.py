@@ -46,15 +46,14 @@ def main() -> None:
 
     # Write PyPI packages
     root.mkdir(exist_ok=True)
-    with open(root / "requirements.txt", "w") as f:
-        f.write("\n".join(pypi_packages))
+    pypi_file = root / "requirements.txt"
+    conda_file = root / "conda_requirements.txt"
 
-    # Write Conda packages
-    with open(root / "conda_requirements.txt", "w") as f:
-        f.write("\n".join(conda_packages))
+    pypi_file.write_text("\n".join(pypi_packages))
+    conda_file.write_text("\n".join(conda_packages))
 
-    print(f"{root / 'requirements.txt'} generated with {len(pypi_packages)} PyPI packages.")
-    print(f"{root / 'conda_requirements.txt'} generated with {len(conda_packages)} Conda packages.")
+    print(f"{pypi_file} generated with {len(pypi_packages)} PyPI packages.")
+    print(f"{conda_file} generated with {len(conda_packages)} Conda packages.")
 
 
 if __name__ == "__main__":
