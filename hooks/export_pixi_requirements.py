@@ -83,12 +83,10 @@ def main():
         pypi_lines = sorted(f"{name}=={version}" if version else name for name, version in pypi_packages.items())
         conda_lines = sorted(f"{name}=={version}" if version else name for name, version in conda_packages.items())
 
-        # Write per-environment files
-        with open(root / f"requirements-{env}.txt", "w") as f:
-            f.write("\n".join(pypi_lines))
-
-        with open(root / f"conda_requirements-{env}.txt", "w") as f:
-            f.write("\n".join(conda_lines))
+        # Write per-environment files. LF and a final newline on every OS, as git stores them; otherwise the
+        # mixed-line-ending and end-of-file-fixer hooks rewrite the files after every export.
+        (root / f"requirements-{env}.txt").write_text("\n".join(pypi_lines) + "\n", newline="\n")
+        (root / f"conda_requirements-{env}.txt").write_text("\n".join(conda_lines) + "\n", newline="\n")
 
         print(f"  {env}: {len(pypi_lines)} PyPI, {len(conda_lines)} Conda packages.")
 
