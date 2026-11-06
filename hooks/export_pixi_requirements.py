@@ -56,6 +56,15 @@ def get_packages_for_environment(env: str) -> list[dict]:
     return json.loads(result.stdout)
 
 
+def write_requirements(path: Path, lines: list[str]) -> None:
+    """Write one requirement per line, with LF on every OS, as git stores them.
+
+    Every line ends in a newline and an environment without packages gives an empty file; otherwise the
+    mixed-line-ending and end-of-file-fixer hooks rewrite the file after every export.
+    """
+    path.write_text("".join(f"{line}\n" for line in lines), newline="\n")
+
+
 def main():
     """Generate requirements files for a configured Pixi platform."""
 
@@ -83,10 +92,9 @@ def main():
         pypi_lines = sorted(f"{name}=={version}" if version else name for name, version in pypi_packages.items())
         conda_lines = sorted(f"{name}=={version}" if version else name for name, version in conda_packages.items())
 
-        # Write per-environment files. LF and a final newline on every OS, as git stores them; otherwise the
-        # mixed-line-ending and end-of-file-fixer hooks rewrite the files after every export.
-        (root / f"requirements-{env}.txt").write_text("\n".join(pypi_lines) + "\n", newline="\n")
-        (root / f"conda_requirements-{env}.txt").write_text("\n".join(conda_lines) + "\n", newline="\n")
+        # Write per-environment files
+        write_requirements(root / f"requirements-{env}.txt", pypi_lines)
+        write_requirements(root / f"conda_requirements-{env}.txt", conda_lines)
 
         print(f"  {env}: {len(pypi_lines)} PyPI, {len(conda_lines)} Conda packages.")
 
