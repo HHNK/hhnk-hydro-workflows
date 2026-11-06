@@ -116,18 +116,13 @@ jobs:
           manifest-path: ${{ inputs.sibling-repos != '[]' && format('{0}/pixi.toml', github.event.repository.name) || 'pixi.toml' }}
           environments: ${{ inputs.pixi-environment }}
 
-      # --- Pre-commit (standard layout) ---
+      # --- Pre-commit ---
       - name: Run pre-commit hooks
-        if: inputs.run-pre-commit && inputs.sibling-repos == '[]'
-        uses: pre-commit/action@v3.0.1
-
-      # --- Pre-commit (sibling layout) ---
-      - name: Run pre-commit hooks (sibling layout)
-        if: inputs.run-pre-commit && inputs.sibling-repos != '[]'
-        working-directory: ${{ github.event.repository.name }}
+        if: inputs.run-pre-commit
+        working-directory: ${{ inputs.sibling-repos != '[]' && github.event.repository.name || '.' }}
         run: |
           pip install pre-commit
-          pre-commit run --all-files
+          pre-commit run --show-diff-on-failure --color=always --all-files
 
       # --- Style check fallback ---
       - name: Run style checks (fallback)

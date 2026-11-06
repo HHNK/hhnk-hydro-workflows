@@ -12,7 +12,7 @@ on:
         description: 'Pixi version to use'
         required: false
         type: string
-        default: 'v0.39.4'
+        default: 'latest'
       style-command:
         description: 'Style check command to run'
         required: false
