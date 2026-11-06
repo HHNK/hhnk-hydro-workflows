@@ -12,7 +12,7 @@ on:
         description: 'Pixi version to use'
         required: false
         type: string
-        default: 'v0.39.4'
+        default: 'latest'
       style-command:
         description: 'Style check command to run'
         required: false
@@ -24,15 +24,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ inputs.python-version }}
 
       - name: Install pixi
-        uses: prefix-dev/setup-pixi@v0.8.1
+        uses: prefix-dev/setup-pixi@v0.11.3
         with:
           pixi-version: ${{ inputs.pixi-version }}
 
