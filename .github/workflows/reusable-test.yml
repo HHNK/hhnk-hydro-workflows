@@ -120,6 +120,10 @@ jobs:
       - name: Run pre-commit hooks
         if: inputs.run-pre-commit
         working-directory: ${{ inputs.sibling-repos != '[]' && github.event.repository.name || '.' }}
+        env:
+          # no-commit-to-branch is there to stop local commits to main, but it fails whenever
+          # main is checked out, and this job runs on main after every merge
+          SKIP: no-commit-to-branch
         run: |
           pip install pre-commit
           pre-commit run --show-diff-on-failure --color=always --all-files
