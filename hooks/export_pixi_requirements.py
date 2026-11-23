@@ -65,10 +65,27 @@ def write_requirements(path: Path, lines: list[str]) -> None:
     path.write_text("".join(f"{line}\n" for line in lines), newline="\n")
 
 
+def untracked(paths: list[Path]) -> list[Path]:
+    """The paths git neither tracks nor ignores.
+
+    A hook that only changes a tracked file fails the commit, but one that creates a file passes it and the
+    commit goes through without that file, so a new environment's exports are named here instead.
+    """
+    names = [str(path) for path in paths]
+    result = subprocess.run(
+        ["git", "ls-files", "--others", "--exclude-standard", "--", *names], capture_output=True, text=True, check=True
+    )
+    return [Path(line) for line in result.stdout.splitlines()]
+
+
 def main():
-    """Generate requirements files for a configured Pixi platform."""
+    """Generate requirements files for a configured Pixi platform.
+
+    Exits 1 when it created a file git does not track: stage it and commit again.
+    """
 
     root = Path.cwd() / "security"
+    written: list[Path] = []
 
     environments = get_environments()
     print(f"Scanning environments: {environments}")
@@ -93,10 +110,18 @@ def main():
         conda_lines = sorted(f"{name}=={version}" if version else name for name, version in conda_packages.items())
 
         # Write per-environment files
-        write_requirements(root / f"requirements-{env}.txt", pypi_lines)
-        write_requirements(root / f"conda_requirements-{env}.txt", conda_lines)
+        for name, lines in ((f"requirements-{env}.txt", pypi_lines), (f"conda_requirements-{env}.txt", conda_lines)):
+            write_requirements(root / name, lines)
+            written.append(root / name)
 
         print(f"  {env}: {len(pypi_lines)} PyPI, {len(conda_lines)} Conda packages.")
+
+    new = untracked(written)
+    if new:
+        print("Created files git does not track; stage them and commit again:")
+        for path in new:
+            print(f"  {path.as_posix()}")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
