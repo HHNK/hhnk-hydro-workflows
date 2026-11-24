@@ -138,12 +138,12 @@ This hook enables Dependabot security scanning for repositories that use Pixi.
 
 Dependabot does not currently detect dependencies from a `pixi.toml` file. Therefore, the dependencies defined in the Pixi environment are exported to requirements files that Dependabot can automatically detect and scan.
 
-The hook generates the following files:
+The hook generates the following files for each Pixi environment:
 
-- `security/conda_requirements.txt`
-- `security/requirements.txt`
+- `security/conda_requirements-{ENVIRONMENT}.txt`
+- `security/requirements-{ENVIRONMENT}.txt`
 
-The files are generated based on the contents of `pixi.lock`.
+The files are generated based on the contents of `pixi.lock`. Dependabot reads both as pip requirements, so conda packages are checked against PyPI advisories by name. A conda package that pip cannot parse (a `_`-prefixed placeholder such as `_openmp_mutex`, or a version outside PEP 440 such as `tzdata==2026e`) is left out, since one such line fails the whole file; the hook prints the ones it leaves out.
 
 To ensure deterministic output across development environments and CI systems, package exports default to the `linux-64` platform. Projects that do not support `linux-64` can override the platform:
 
