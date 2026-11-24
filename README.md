@@ -153,7 +153,7 @@ To ensure deterministic output across development environments and CI systems, p
 ```
 
 
-The hook only runs when `pixi.lock` changes.
+The hook only runs when `pixi.lock` changes. It exits 1 when it created a file git does not track (a new environment adds two), because pre-commit fails a commit only for a changed tracked file and would let the commit through without it: stage the files and commit again.
 
 For the initial setup, run `pre-commit run export-pixi-requirements --all-files`
 
